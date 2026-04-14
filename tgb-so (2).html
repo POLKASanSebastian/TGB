@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>TGB · Sistema Operativo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body,#root{height:100%;background:#f2f2f0;}
+  body{font-family:'Barlow',system-ui,sans-serif;overscroll-behavior:none;}
+  input,select,button{font-family:inherit;}
+  ::-webkit-scrollbar{width:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:rgba(155,191,58,0.3);border-radius:2px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+
+const { useState } = React;
+
+// ─── BRAND ───────────────────────────────────────────────────────────────────
+const B = {
+  verde:    "#9BBF3A",
+  verdeOsc: "#6e8a28",
+  verdeCl:  "#c8de85",
+  dark:     "#3C3C3B",
+  darkOsc:  "#252524",
+  darkCl:   "#5a5a58",
+  blanco:   "#ffffff",
+  crema:    "#f2f2f0",
+  gris:     "#7a7a78",
+  grisCl:   "#e4e4e1",
+  rojo:     "#d94235",
+  amarillo: "#f5a623",
+};
+
+// ─── DATOS ────────────────────────────────────────────────────────────────────
+
+const ROLES = [
+  {
+    id:"ger", emoji:"🎯", title:"Gerente", color:B.dark,
+    mision:"Garantizar que el local funciona con excelencia sin necesitar al franquiciado.",
+    cuando:"Presencia en los turnos de mayor volumen. Controla la operativa diaria del local desde la gestión, no desde el servicio.",
+    hace:[
+      "Briefing diario 5 min antes del servicio con guía de posicionamiento",
+      "Controlar guía de posicionamiento según venta estimada del día",
+      "Supervisar ritmo de barra, cocina y pase",
+      "Resolver incidencias y gestionar quejas de cliente",
+      "Cuadre de caja Codisys al cierre de cada turno",
+      "Administrar datos de ventas, mermas, food cost, labor cost y gastos fijos",
+      "Reportar KPIs semanales al franquiciado",
+      "Organizar inventario, pedidos, entregas y devoluciones a Logirest",
+    ],
+    nohace:[
+      "Ausentarse del local en hora punta",
+      "Dejar turno sin responsable identificado",
+      "Gestionar incidencias graves sin comunicar al franquiciado",
+    ],
+    kpis:["Ticket medio ≥ objetivo","Prime Cost ≤ 60%","0 quejas sin resolver","Labor Cost ≤ 30%"],
+    tutor:"Franquiciado",
+  },
+  {
+    id:"enc", emoji:"🏅", title:"Encargado", color:B.verde,
+    mision:"Ser el brazo derecho del gerente: operativa impecable en su turno.",
+    cuando:"Entra con suficiente antelación para revisar el local antes del servicio.",
+    hace:[
+      "Seguimiento de cajas y cierre: cuadre Codisys al final de cada turno",
+      "Seguimiento de uniformes: verificar que todo el equipo cumple la indumentaria TGB",
+      "Seguimiento de entregas delivery: verificar tiempos y estado de pedidos Glovo / Just Eat",
+      "Roturas de stock: detectar y comunicar faltantes antes de que afecten al servicio",
+      "Puntuación Google: revisar reseñas nuevas y comunicar al gerente las incidencias",
+      "Colocación de terraza: supervisar que el mobiliario está correcto en apertura y recogido en cierre",
+      "Limpieza de cristales y bombillas: verificar en apertura según checklist semanal",
+      "Control de temperaturas APPCC: registrar cámaras en apertura y cierre sin excepción",
+      "Etiquetado: verificar que todo producto abierto o descongelado está correctamente etiquetado (FIFO)",
+      "Venta sugerida: incentivar y supervisar que la frase estándar TGB se usa en cada pedido",
+      "Control de fichajes: confirmar en Mapal que todos los empleados han fichado correctamente",
+      "Salidas de caja y pagos H.E.: registrar y justificar cualquier salida de efectivo o pago de horas extra",
+    ],
+    nohace:[
+      "Saltarse el registro de mermas",
+      "Autorizar cambios de turno sin comunicar al gerente",
+      "Resolver incidencias graves sin avisar",
+    ],
+    kpis:["FIFO al 100%","Mise en place lista antes del servicio","0 mermas sin registrar"],
+    tutor:"Gerente en turno",
+  },
+  {
+    id:"emp", emoji:"🍔", title:"Empleado de Barra", color:B.darkCl,
+    mision:"Primer contacto con el cliente. La venta sugerida empieza aquí.",
+    cuando:"TPV operativo y abastecido de cambio antes de abrir.",
+    hace:[
+      "Recibir al cliente con bienvenida y contacto visual",
+      "Escuchar y anotar comanda con conocimiento pleno de la carta",
+      "Hacer venta sugerida natural en cada pedido",
+      "Verificar pedido con el cliente y entregar bebidas antes de sentarse",
+      "Cobrar en datáfono ANTES que en TPV para evitar errores",
+      "Despedir según protocolo de atención al cliente",
+      "Mantener el puesto limpio durante todo el servicio",
+    ],
+    nohace:[
+      "Atender sin conocer la carta completa",
+      "Cobrar sin confirmar el pedido",
+      "Dejar el TPV sin fondo de caja correcto",
+    ],
+    kpis:["Attach rate complementos ≥ 30%","0 errores de cobro","Ticket medio ≥ objetivo"],
+    tutor:"Encargado en turno",
+  },
+  {
+    id:"coc", emoji:"🔥", title:"Puesto Cocina", color:B.amarillo,
+    mision:"Cadencia perfecta del pase. Producto idéntico en cada burger, siempre.",
+    cuando:"Maquinaria encendida con la antelación marcada por cada equipo.",
+    hace:[
+      "Mise en place según previsión de ventas del encargado",
+      "Ingredientación exacta según chart — sin improvisación",
+      "Control de temperaturas de elaboración (APPCC)",
+      "Gestión de FIFO y etiquetado en cámaras",
+      "Registro de mermas en tiempo real, no al cierre",
+      "Pase: verificar cada pedido antes de entregar al cliente",
+      "Limpieza básica entre rondas de plancha",
+    ],
+    nohace:[
+      "Modificar porciones o ingredientes sin validación",
+      "Saltarse el FIFO en cámaras",
+      "Dejar maquinaria encendida sin supervisión",
+    ],
+    kpis:["Food Cost ≤ 28-30%","0 platos devueltos por error","Desviación FC ≤ 2pp vs teórico"],
+    tutor:"Encargado en turno",
+  },
+  {
+    id:"sal", emoji:"🧹", title:"Sala & Office", color:B.darkCl,
+    mision:"Que el cliente siempre vea un local limpio y ordenado. Que nunca falte vajilla.",
+    cuando:"Desde apertura. Presencia continua durante el servicio.",
+    hace:[
+      "Recogida continua de mesas — no esperar a que estén completas",
+      "Limpieza y desinfección de mesas, sillas y zonas comunes",
+      "Revisión y reposición de aseos cada hora",
+      "Lavado de vajilla separando cristalería de menaje de cocina",
+      "Priorizar lavado de los utensilios más urgentes para cocina",
+      "Gestión y reciclaje de basuras durante el servicio",
+      "Venta sugerida desde sala: café, postre, extras",
+    ],
+    nohace:[
+      "Dejar acumulación de sucios en office",
+      "Mezclar residuos sin segregar",
+      "Abandonar sala en hora punta",
+    ],
+    kpis:["0 paradas de servicio por falta de vajilla","Aseos limpios en cada revisión","Local visualmente impecable"],
+    tutor:"Encargado en turno",
+  },
+];
+
+const CHECKLISTS = {
+  apertura: {
+    label:"Apertura", hora:"Antes de abrir", color:B.dark,
+    items:[
+      {t:"Encendido campana extracción (30 min antes)",r:"COC"},
+      {t:"Encendido freidoras — temperatura 175°C (20 min antes)",r:"COC"},
+      {t:"Test de aceite freidoras y registro APPCC",r:"COC"},
+      {t:"Encendido tostador vertical 260°C (30 min antes)",r:"COC"},
+      {t:"Encendido Plancha Taylor (60 min antes)",r:"COC"},
+      {t:"Encendido Horno Lincat 220°C para bacon (20 min antes)",r:"COC"},
+      {t:"Encendido TPV, luces barra y pantallas",r:"ENC"},
+      {t:"Verificar fondo de caja acordado",r:"ENC"},
+      {t:"Guía de posicionamiento rellenada según venta estimada",r:"ENC"},
+      {t:"Verificación temperaturas cámaras (Mapal / APPCC)",r:"COC"},
+      {t:"FIFO y etiquetado verificados en cámaras",r:"COC"},
+      {t:"Abastecimiento zona barra: cartas, cristalería, cambio",r:"BAR"},
+      {t:"Datáfono encendido y cargado",r:"BAR"},
+      {t:"Reponer mesa fría según previsión de ventas",r:"COC"},
+      {t:"Mise en place completa de cocina",r:"COC"},
+      {t:"Limpieza de sala, aseos y zona exterior",r:"SAL"},
+      {t:"Briefing de equipo 5 min antes de abrir",r:"GER"},
+    ],
+  },
+  preservicio: {
+    label:"Pre-servicio", hora:"15 min antes del turno", color:B.verde,
+    items:[
+      {t:"Guía de posicionamiento actualizada para este turno",r:"ENC"},
+      {t:"TPV Codisys operativo — fondo de caja correcto",r:"ENC"},
+      {t:"Reposición de preparación y productos de mesa fría",r:"COC"},
+      {t:"Revisar carta y especiales del día — memorizarlos",r:"BAR"},
+      {t:"Abastecimiento barra: bebidas, cristalería, monodosis",r:"BAR"},
+      {t:"Verificar lavavajillas y materiales office",r:"SAL"},
+      {t:"Confirmar personal en turno completo",r:"ENC"},
+      {t:"Avisadores cargados y en posición",r:"BAR"},
+    ],
+  },
+  servicio: {
+    label:"Durante el servicio", hora:"En curso", color:B.verdeOsc,
+    items:[
+      {t:"Recibir cliente: bienvenida, contacto visual, comanda",r:"BAR"},
+      {t:"Venta sugerida activa en cada pedido — frase estándar",r:"BAR"},
+      {t:"Cobrar en datáfono ANTES que en TPV",r:"BAR"},
+      {t:"Entregar ticket y avisador al cliente",r:"BAR"},
+      {t:"Ritmo de pase: verificar pedido antes de entregar",r:"COC"},
+      {t:"Registro de mermas en tiempo real",r:"COC"},
+      {t:"Recogida continua de mesas — no esperar",r:"SAL"},
+      {t:"Revisión de aseos cada 60 min",r:"SAL"},
+      {t:"Supervisar ritmo y resolver incidencias",r:"ENC"},
+    ],
+  },
+  entre: {
+    label:"Entre servicios", hora:"16:30 – 20:00", color:B.darkCl,
+    items:[
+      {t:"Recogida y limpieza de sala tras comida",r:"SAL"},
+      {t:"Reposición de preparación para cena",r:"COC"},
+      {t:"Filtrado de freidoras si aplica",r:"COC"},
+      {t:"Pedido Logirest para el día siguiente (límite 15:00)",r:"ENC"},
+      {t:"Reponer bebidas barra para cena",r:"BAR"},
+      {t:"Comunicar incidencias del servicio de comida",r:"ENC"},
+      {t:"Rotación FIFO — revisar caducidades secundarias",r:"COC"},
+    ],
+  },
+  cierre: {
+    label:"Cierre", hora:"Tras el último cliente", color:B.rojo,
+    items:[
+      {t:"Cuadre de caja Codisys y arqueo",r:"GER"},
+      {t:"Pesar y registrar desperdicios del día",r:"COC"},
+      {t:"Limpieza integral Plancha Taylor con desengrasante",r:"COC"},
+      {t:"Desmontaje y limpieza teflón tostador vertical",r:"COC"},
+      {t:"Agua caliente por grifos (cerveza y Coca-Cola)",r:"BAR"},
+      {t:"Boquillas grifo Coca-Cola en agua caliente overnight",r:"BAR"},
+      {t:"Reposición bebidas para el día siguiente (FIFO)",r:"BAR"},
+      {t:"Limpieza filtros campana extracción",r:"COC"},
+      {t:"Limpieza office y vaciado de lavavajillas",r:"SAL"},
+      {t:"Vaciado de basuras y registro Mapal (APPCC)",r:"SAL"},
+      {t:"Cobertura correcta de cámaras — temperatura de cierre",r:"COC"},
+      {t:"Desmontaje sala y limpieza de mesas, sillas, suelos",r:"SAL"},
+      {t:"Anotar incidencias del día en cuaderno de cierre",r:"GER"},
+      {t:"Apagar equipos, luces y asegurar el local",r:"GER"},
+      {t:"Enviar resumen de ventas al franquiciado",r:"GER"},
+    ],
+  },
+};
+
+const PROTOCOLOS = [
+  {
+    id:"logirest", emoji:"📦", title:"Pedido Logirest no llega / incompleto", urgencia:"MEDIA", color:B.amarillo,
+    pasos:[
+      "Verificar la hora pactada de entrega (martes y viernes 10h aprox.)",
+      "Si supera 30 min del horario → llamar a Logirest con número de pedido",
+      "Revisar el albarán al recibirlo: si falta producto, anotarlo antes de firmar",
+      "Producto en mal estado: rechazarlo en el momento y devolver al transportista",
+      "Informar al gerente — evaluar stock disponible e impacto en carta",
+      "Ajustar preparación del día priorizando los productos disponibles",
+      "Si el problema es recurrente → documentar y comunicar al franquiciado",
+    ],
+    nohacer:"No firmar el albarán con discrepancias sin anotarlas. No improvisar carta sin comunicarlo al equipo.",
+    contacto:"Logirest desde portal CodyShop. Pedidos: límite 9h del día anterior.",
+  },
+  {
+    id:"averia", emoji:"⚙️", title:"Avería de maquinaria crítica", urgencia:"ALTA", color:B.rojo,
+    pasos:[
+      "No intentar reparar sin formación técnica. Avisar al gerente de inmediato.",
+      "Plancha Taylor averiada: activar modo limpieza antes de apagar. Evaluar plancha convencional como backup.",
+      "Freidoras: verificar si es fallo eléctrico (interruptor, cuadro). Si persiste → cerrar línea de fritos.",
+      "Comunicar a los clientes en cola: espera mayor. Ofrecer alternativa de carta.",
+      "Gerente llama al servicio técnico homologado por Restalia. NO técnico externo sin autorización.",
+      "Si afecta a equipos de frío → revisar temperaturas APPCC de inmediato.",
+      "Registrar avería: hora de inicio, fallo y hora de resolución. Comunicar al franquiciado.",
+    ],
+    nohacer:"No ocultar la avería. No seguir usando equipo dañado. No contratar técnico externo sin autorizar.",
+    contacto:"Servicio técnico homologado Restalia — número en agenda del local.",
+  },
+  {
+    id:"noshown", emoji:"🤒", title:"Empleado no aparece en turno", urgencia:"ALTA", color:B.rojo,
+    pasos:[
+      "WhatsApp + llamada al empleado. Esperar respuesta máximo 15 min.",
+      "Si no responde → encargado reorganiza posiciones con personal disponible.",
+      "Evaluar si el turno puede cubrirse: reducir puestos no esenciales si es turno bajo.",
+      "Si es turno de alta venta (jueves, fin de semana) → el gerente se incorpora al turno.",
+      "Contactar lista de personal de apoyo o disponibles.",
+      "Registrar la ausencia en Mapal. Comunicar al franquiciado si afecta al servicio.",
+      "Si la ausencia es reiterada → escalar al franquiciado para gestión disciplinaria.",
+    ],
+    nohacer:"No cancelar servicio sin consultar al franquiciado. Siempre debe haber un responsable en turno.",
+    contacto:"Lista de personal de apoyo — en agenda del local. Franquiciado: Felix / Juan Jose.",
+  },
+  {
+    id:"queja", emoji:"😤", title:"Cliente conflictivo / queja grave", urgencia:"ALTA", color:B.rojo,
+    pasos:[
+      "El empleado escucha sin interrumpir. Sin defensas ni excusas.",
+      "Repetir lo que ha dicho: 'Entiendo que la espera ha sido larga...'",
+      "Disculparse con sinceridad aunque no sea culpa directa.",
+      "Ofrecer solución concreta: repetir pedido, cambiarlo o aplicar descuento.",
+      "Informar al encargado o gerente INMEDIATAMENTE.",
+      "El gerente asume la situación en persona si se escala.",
+      "Registrar incidencia en el cuaderno de cierre.",
+      "Si el cliente se va insatisfecho → comunicar al franquiciado ese mismo día.",
+    ],
+    nohacer:"No discutir. No pasar la responsabilidad al compañero. No ignorar la queja.",
+    contacto:"Encargado o gerente en turno — él decide la compensación.",
+  },
+  {
+    id:"temperatura", emoji:"🌡️", title:"Temperatura fuera de rango en cámara", urgencia:"ALTA", color:B.rojo,
+    pasos:[
+      "Verificar si la puerta estaba bien cerrada. Revisar termostato.",
+      "Si lleva menos de 30 min fuera de rango: cerrar bien, vigilar y registrar en APPCC.",
+      "Si supera 1 hora fuera de rango: evaluar estado del producto con el encargado.",
+      "En caso de duda sobre la seguridad del producto → no usar. Descartar.",
+      "Trasladar urgentemente producto crítico (carnes) a otra cámara disponible.",
+      "Llamar al servicio técnico de mantenimiento de cámaras.",
+      "Registrar la incidencia completa en el APPCC.",
+    ],
+    nohacer:"No usar producto que ha superado temperaturas de seguridad aunque 'parezca bien'. No esconder el incidente.",
+    contacto:"Técnico de mantenimiento cámaras — número en agenda. Franquiciado si hay pérdida de género.",
+  },
+  {
+    id:"tpv", emoji:"💻", title:"TPV / Codisys no funciona", urgencia:"MEDIA", color:B.amarillo,
+    pasos:[
+      "Reiniciar el TPV desde el botón de encendido. Las actualizaciones son automáticas desde central.",
+      "Si persiste: verificar conexión a internet del local.",
+      "Usar el segundo TPV si está disponible (TGB opera con 2 terminales).",
+      "Si ambos fallan: contactar soporte técnico Codisys vía portal del franquiciado.",
+      "Mientras se resuelve: anotar pedidos en papel. Cobrar solo en efectivo si es posible.",
+      "Al recuperar el sistema: introducir todas las comandas manuales con la hora real.",
+    ],
+    nohacer:"No dejar de cobrar. No improvisar registros que luego no se puedan cuadrar.",
+    contacto:"Soporte Codisys desde portal CodyShop. Gerente informa al franquiciado.",
+  },
+];
+
+const ONBOARDING = {
+  antes:["Leer la ficha de su puesto (este documento)","Conocer la carta completa: nombres, ingredientes, alérgenos","Visitar el local fuera de servicio para orientarse","Conocer al gerente y encargado de referencia","Tener Mapal instalado en el móvil y acceso activado"],
+  sem1:["Turno de observación completo — no interviene, solo mira y pregunta","Turno acompañado por tutor — interviene con supervisión directa","Conocer el flujo de comandas en Codisys","Dominar el checklist de apertura, servicio y cierre de su puesto","Protocolo de temperaturas, FIFO y etiquetado","Evaluación informal con el encargado al final de la semana"],
+  sem2:["Turno en solitario con encargado disponible","Gestión de situaciones estándar: comanda, cobro, incidencias leves","Conocer y aplicar los 6 protocolos de incidencia","Venta sugerida activa en cada interacción — medir attach rate propio","Feedback del gerente al final de la semana"],
+  mes1:["Autonomía completa en su puesto","Manejo de quejas básicas con supervisión del encargado","Contribuir al briefing diario","Evaluación formal a los 30 días con gerente y franquiciado","Firmar conformidad con el manual de operaciones"],
+  espera:["Puntualidad: 5 min antes de tu hora, siempre. Si llegas tarde, avisa.","Uniforme completo y limpio antes de entrar al local","Móvil en bolsillo, nunca en mano durante el servicio","Si no sabes algo, pregunta. Nunca improvises con el cliente","El checklist no es opcional. Si no está marcado, no está hecho","Comunicación directa: los problemas se dicen, no se esconden","La frase de venta sugerida se usa en CADA pedido, sin excepción"],
+};
+
+const FICHAS = [
+  {
+    id:"cheeseburguer", cat:"Barra", emoji:"🍔", nombre:"Cheese Burger", precio:"",
+    desc:"La base de TGB. Pan brioche de receta propia, carne de vacuno, queso americano, salsa TGB.",
+    ing:[{p:"Pan TGB XL (brioche)",c:"1 ud"},{p:"Carne vacuno",c:"120g / 140g"},{p:"Queso americano",c:"1 loncha"},{p:"Lechuga",c:"10g"},{p:"Tomate rodajas (mandolina)",c:"2 ud"},{p:"Salsa TGB",c:"10g"}],
+    proceso:["Colocar pan en tostador vertical a 260°C — pasar por rodillo de mantequilla antes","Colocar carne en Plancha Taylor según posicionamiento del chart","Al levantar el brazo: añadir queso. Volver a cerrar para terminar","Ingredientar mesa fría: lechuga, tomate, salsa sobre base de pan","Montar carne sobre ingredientación. Cerrar con corona.","Envolver en papel parafinado y servir en bandeja"],
+    montaje:"Bandeja metálica con papel parafinado serigrafiado. Servir caliente.",
+    alergenos:"Gluten (pan), Lácteos (queso, mantequilla). Verificar siempre con cliente.",
+    fc:"Producto base — Food Cost controlado con gramaje exacto por chart.",
+    nota:"🎯 La Cheese Burger es la referencia. Si esta no sale perfecta, nada sale perfecto.",
+  },
+  {
+    id:"bbq", cat:"Barra", emoji:"🥓", nombre:"BBQ Burger", precio:"",
+    desc:"Con bacon, aros de cebolla y salsa BBQ. Sin tomate ni lechuga.",
+    ing:[{p:"Pan TGB XL",c:"1 ud"},{p:"Carne vacuno con queso",c:"120g"},{p:"Bacon lonchas (Horno Lincat)",c:"2 medias lonchas"},{p:"Aros de cebolla",c:"25g"},{p:"Salsa BBQ",c:"10g"}],
+    proceso:["Bacon: horno Lincat a 220°C durante 6 minutos. Escurrir bien.","Tostar pan y pasar por mantequilla en tostador vertical","Cocinar carne en Taylor. Añadir queso antes del cierre final.","Ingredientar: salsa BBQ, aros de cebolla, bacon encima de la carne","No lleva tomate ni lechuga. Verificar siempre."],
+    montaje:"Bandeja metálica. Servir caliente. Sin guarnición de verdura.",
+    alergenos:"Gluten, Lácteos, posible trazas de soja (bacon). Verificar ficha técnica.",
+    fc:"—",
+    nota:"⚠️ Recordar: sin tomate, sin lechuga. Error frecuente en nuevos empleados.",
+  },
+  {
+    id:"crunchy", cat:"Barra", emoji:"🍗", nombre:"Pollo Crunchy", precio:"",
+    desc:"Pechuga de pollo rebozada crujiente, queso americano, lechuga, tomate y salsa.",
+    ing:[{p:"Pan TGB",c:"1 ud"},{p:"Pollo Crunchy frito",c:"6' (1-3 ud) / 7' (4-6 ud) 175°C"},{p:"Queso americano",c:"1 loncha"},{p:"Lechuga",c:"10g"},{p:"Tomate rodajas",c:"2 ud"},{p:"Salsa (a elegir)",c:"10g"}],
+    proceso:["Freír pollo en freidora a 175°C. Tiempo según cantidad de piezas.","Temperatura interior del pollo debe superar 75°C antes de servir","Tostar pan. Ingredientar lechuga, tomate y salsa en base.","Colocar pollo caliente sobre ingredientación. Añadir queso encima.","Cerrar con corona. Envolver en papel parafinado."],
+    montaje:"Bandeja metálica. Servir inmediatamente tras freidora.",
+    alergenos:"Gluten, Lácteos, Huevo (rebozado). Verificar con cliente.",
+    fc:"—",
+    nota:"✅ Temperatura interior pollo ≥ 75°C — SIEMPRE verificar antes de servir.",
+  },
+  {
+    id:"pulledpork", cat:"Barra", emoji:"🐷", nombre:"Pulled Pork BBQ", precio:"",
+    desc:"Cerdo desmechado 100g, aros de cebolla, salsa BBQ. Retención en baño maría.",
+    ing:[{p:"Pan TGB",c:"1 ud"},{p:"Pulled Pork (descongelado 24h en cámara)",c:"100g"},{p:"Aros de cebolla",c:"25g"},{p:"Salsa BBQ",c:"10g"}],
+    proceso:["Descongelar pulled pork en cámara refrigeración con 24h de antelación. Etiquetar.","Precalentar en microondas antes de introducir en baño maría.","Baño maría: temperatura 70°C-75°C. Retención según tabla de caducidades secundarias.","Tostar pan. Ingredientar salsa BBQ y cebolla.","Colocar 100g de pulled pork caliente. Cerrar con corona."],
+    montaje:"Bandeja metálica. Servir siempre a temperatura de retención.",
+    alergenos:"Gluten. Sin otros alérgenos destacados. Verificar ficha técnica.",
+    fc:"—",
+    nota:"⏱️ Caducidad en baño maría según tabla secundaria del portal del franquiciado.",
+  },
+  {
+    id:"patatas", cat:"Fritos", emoji:"🍟", nombre:"Patatas & Fritos", precio:"",
+    desc:"Patatas, nachos, aros de cebolla y otros fritos. Clave del ticket medio.",
+    ing:[{p:"Patatas (según formato)",c:"Gramaje exacto por chart"},{p:"Aceite freidora",c:"Nivel correcto — cambio cuando test lo indica"},{p:"Sal",c:"Monodosis en pase"}],
+    proceso:["Test de aceite en apertura y cierre — registrar en APPCC.","Temperatura freidora: 175°C. Separar cuerpos por producto (patatas / carne / pescado).","Freír según gramaje del chart. No sobrecargar las cestas.","Escurrir bien. Mantener en retenedor caliente (calor seco — conserva textura crujiente).","Servir en bandeja con sal monodosis en el pase."],
+    montaje:"Bandeja metálica o caja burger según formato. Sal por separado.",
+    alergenos:"Gluten (posible contaminación cruzada si se fríe rebozado en misma freidora).",
+    fc:"⚠️ El aceite es la desviación más frecuente. Test diario y cambio cuando el test lo marque.",
+    nota:"🔄 Cambio de aceite: cuando la medición lo solicita, nunca antes ni después.",
+  },
+  {
+    id:"cerveza", cat:"Barra", emoji:"🍺", nombre:"Cerveza en Jarra Helada", precio:"",
+    desc:"Heineken de grifo. Jarra escarchada mínimo 3h en congelador. Icono de la marca.",
+    ing:[{p:"Cerveza Heineken barril",c:"Según formato jarra"},{p:"CO₂",c:"Mantenimiento por proveedor"},{p:"Jarra escarchada",c:"Mínimo 3h en congelador"}],
+    proceso:["Jarra sale del lavavajillas → atemperar 5 min → congelador SIN humedecer.","Tiempo mínimo en congelador: 3 horas. Rotación FIFO de jarras.","Antes de servir: refrescar jarra con dispensador de agua del grifo.","Inclinar jarra 45° durante todo el llenado. Dejar 3cm para crema al final.","Abrir grifo levemente al final para crear crema. Nunca espuma."],
+    montaje:"Jarra escarchada en posavasos TGB. Servir inmediatamente.",
+    alergenos:"Gluten (cebada). Informar siempre.",
+    fc:"—",
+    nota:"⭐ La jarra helada es uno de los mayores reclamos de TGB. Sin jarra fría, no se sirve.",
+  },
+];
+
+// ─── GUIÓN DE VENTA ──────────────────────────────────────────────────────────
+const PERFILES = [
+  {
+    id:"solo", emoji:"🧍", titulo:"Viene Solo",
+    upselling:"¡Todas las Burgers llevan patatas y bebida recargable en el menú!",
+    crossselling:[
+      "¿Las patatas las ponemos con cheddar y bacon?",
+      "¿Has probado los Nuevos Cheetos Bites? Son 3,20€ y están de locos.",
+    ],
+    postre:"¿Un Shake de Baileys o un Ben&Jerry's para terminar?",
+    tipo:"directo",
+  },
+  {
+    id:"pareja", emoji:"👫", titulo:"Pareja",
+    upselling:"¡Todas las Burgers llevan patatas y bebida recargable en el menú!",
+    crossselling:[
+      "¿Las patatas las ponemos con cheddar y bacon?",
+      "¿Os gusta el picante? → SÍ: 'Entonces los Jalapeño Bites son obligatorios.' → NO: 'Os recomiendo los Cheetos Bites, son la novedad.'",
+    ],
+    postre:"¿Compartimos un postre? Tenemos Shakes o tarrinas Ben&Jerry's.",
+    tipo:"consultivo",
+  },
+  {
+    id:"familia", emoji:"👨‍👩‍👧", titulo:"Familia",
+    upselling:"¡Todas las Burgers llevan patatas y bebida recargable en el menú!",
+    crossselling:[
+      "¿Las patatas las ponemos con cheddar y bacon?",
+      "¿Ponemos unos Nachos o Alitas al centro para compartir? Tenemos medias raciones también.",
+    ],
+    postre:"¿Un Helado Ben&Jerry's o galleta para los peques y un Shake para los mayores?",
+    tipo:"compartir",
+  },
+  {
+    id:"grupo", emoji:"👥", titulo:"Cuadrilla / Grupo",
+    upselling:"¡Todas las Burgers llevan patatas y bebida recargable en el menú!",
+    crossselling:[
+      "¿Las patatas las ponemos con cheddar y bacon?",
+      "¿Ponemos raciones GRANDES de Epic Chicken, Alitas BBQ o Nachos Tex Mex para el centro?",
+    ],
+    postre:"¿Una ronda de Batidos, cafés o algún helado para cerrar?",
+    tipo:"grande",
+  },
+];
+
+const PASOS8 = [
+  {n:1, color:B.dark,    titulo:"RECIBE Y CLASIFICA AL CLIENTE",    desc:"Identifica el perfil en 3 segundos: ¿solo, pareja, familia o grupo?"},
+  {n:2, color:B.dark,    titulo:"SALUDA Y PREGUNTA SALA O LLEVAR",  desc:"Contacto visual, sonrisa, tono cercano. Primera impresión = todo."},
+  {n:3, color:B.dark,    titulo:"TOMA EL PEDIDO",                   desc:"Escucha qué Burger pide. Espera. NO digas nada todavía."},
+  {n:4, color:B.verde,   titulo:"UPSELLING — LANZA EL MENÚ",        desc:"¡Todas las Burgers llevan patata y bebida recargable en el menú!"},
+  {n:5, color:B.verde,   titulo:"CROSSSELLING — RECOMIENDA",        desc:"Usa el guión de PERFILES para las diferentes propuestas."},
+  {n:6, color:B.verde,   titulo:"POSTRE / CIERRE DE VENTA",         desc:"Siempre has de ofrecer un postre, muchos no saben ni que los tenemos."},
+  {n:7, color:B.dark,    titulo:"CONFIRMA EL PEDIDO",               desc:"Repite en voz alta los artículos. Evita errores en cocina. Canta el importe total."},
+  {n:8, color:B.dark,    titulo:"COBRA Y ENTREGA TICKET [PRECISIÓN]",desc:"Gestiona el pago con agilidad. Ofrece siempre el ticket aunque no lo pidan."},
+];
+
+const PROHIBIDO = [
+  "¿Lo quieres en menú? → NUNCA. Di siempre: '¡Las Burgers llevan patatas y bebida en el menú!'",
+  "Ofrecer el postre solo cuando ya han pedido la cuenta — es tarde",
+  "Hacer el crossselling al final, después del cobro — el orden es: upselling → crossselling → postre → confirmar → cobrar",
+  "Recomendar sin escuchar qué perfil es el cliente",
+  "Decir 'no sé' ante una pregunta de carta sin buscar la respuesta",
+];
+
+const KPIS = [
+  {emoji:"🎫",kpi:"Ticket Medio",     obj:"≥ objetivo mensual por local",  freq:"Diario",      quien:"Gerente",            como:"Codisys Back-office → informe cierre",          color:B.verde},
+  {emoji:"🥩",kpi:"Food Cost %",      obj:"≤ 28-30%",                       freq:"Semanal",     quien:"Gerente + Felix",    como:"(Inv.inicial + Compras – Abonos – Inv.final) / Ventas SIN IVA", color:B.amarillo},
+  {emoji:"👥",kpi:"Labor Cost %",     obj:"≤ 30%",                          freq:"Semanal",     quien:"Gerente + Felix",    como:"(Sueldos + SS + ETT) / Ventas SIN IVA × 100",  color:B.rojo},
+  {emoji:"⚡",kpi:"Prime Cost",       obj:"≤ 60%",                          freq:"Semanal",     quien:"Felix",              como:"Food Cost % + Labor Cost %",                   color:B.darkCl},
+  {emoji:"📊",kpi:"EBITDA %",         obj:"≥ 10% sobre ventas",             freq:"Mensual",     quien:"Felix",              como:"Cuenta de Explotación mensual",                color:B.dark},
+  {emoji:"🔗",kpi:"Attach Rate",      obj:"≥ 30% de tickets con extra",     freq:"Diario",      quien:"Gerente / Encargado",como:"Comandas con complemento / total comandas",     color:B.verde},
+  {emoji:"⭐",kpi:"Nota Google",      obj:"≥ 4.2",                          freq:"Semanal",     quien:"Felix",              como:"Google My Business — responder todas las reseñas",color:B.amarillo},
+  {emoji:"🔄",kpi:"Rotación Sala",    obj:"Máx. aprovechamiento franja",    freq:"Por servicio",quien:"Gerente",            como:"Ticket por franja horaria — Codisys",          color:B.verde},
+  {emoji:"📅",kpi:"Asistencia",       obj:"100% sin avisos tardíos",        freq:"Diario",      quien:"Encargado",          como:"Registro en Mapal Turnos 2.0",                 color:B.darkCl},
+  {emoji:"⚠️",kpi:"Desviación FC",   obj:"≤ 2pp vs teórico",               freq:"Semanal",     quien:"Gerente / Encargado",como:"FC real Codisys vs consumo teórico Logirest",  color:B.rojo},
+];
+
+const MODULES = [
+  {id:"roles",      emoji:"👤", label:"Equipo"},
+  {id:"checks",     emoji:"✅", label:"Checks"},
+  {id:"protocolos", emoji:"🚨", label:"Protocolos"},
+  {id:"onboarding", emoji:"🎓", label:"Formación"},
+  {id:"fichas",     emoji:"📋", label:"Fichas"},
+  {id:"servicio",   emoji:"⭐", label:"Servicio"},
+  {id:"kpis",       emoji:"📊", label:"KPIs"},
+];
+
+// ─── SHARED COMPONENTS ───────────────────────────────────────────────────────
+const S = {
+  app:  {minHeight:"100vh", background:B.crema, color:B.darkOsc, maxWidth:430, margin:"0 auto", display:"flex", flexDirection:"column"},
+  hdr:  {background:B.verde, padding:"14px 18px 12px", position:"sticky", top:0, zIndex:50, display:"flex", alignItems:"center", gap:12, boxShadow:"0 2px 14px rgba(110,138,40,0.45)"},
+  cont: {flex:1, overflowY:"auto", padding:"16px 14px 90px"},
+  nav:  {position:"fixed", bottom:0, left:"50%", transform:"translateX(-50%)", width:"100%", maxWidth:430, background:B.verdeOsc, display:"flex", zIndex:100, boxShadow:"0 -2px 12px rgba(0,0,0,0.2)"},
+};
+
+function Card({children, onClick, style={}}) {
+  return React.createElement('div', {
+    onClick,
+    style:{background:B.blanco, border:`1px solid ${B.grisCl}`, borderRadius:8, padding:14, marginBottom:10,
+           cursor:onClick?"pointer":"default", boxShadow:"0 1px 4px rgba(0,0,0,0.05)", ...style}
+  }, children);
+}
+function GreenCard({children, style={}}) {
+  return React.createElement('div', {
+    style:{background:B.dark, borderRadius:8, padding:14, marginBottom:10, color:B.blanco, ...style}
+  }, children);
+}
+function STitle({title, sub}) {
+  return React.createElement('div', {style:{marginBottom:18}},
+    React.createElement('h1', {style:{fontSize:26, fontWeight:900, margin:0, color:B.darkOsc, textTransform:"uppercase", letterSpacing:1,
+      fontFamily:"'Barlow Condensed',sans-serif"}}, title),
+    sub && React.createElement('div', {style:{fontSize:10, letterSpacing:2, color:B.gris, textTransform:"uppercase", fontWeight:600, marginTop:3}}, sub)
+  );
+}
+function SecLbl({children}) {
+  return React.createElement('div', {
+    style:{fontWeight:800, fontSize:9, letterSpacing:3, textTransform:"uppercase", color:B.gris, marginBottom:8, marginTop:14}
+  }, children);
+}
+function Pill({children, color=B.verde}) {
+  return React.createElement('span', {
+    style:{background:color+"1a", color, border:`1px solid ${color}44`, borderRadius:20,
+           padding:"3px 10px", fontSize:9, fontWeight:700, letterSpacing:1, textTransform:"uppercase"}
+  }, children);
+}
+function NumStep({n, text, color=B.verde}) {
+  return React.createElement('div', {style:{display:"flex", gap:12, alignItems:"flex-start", padding:"8px 0", borderBottom:`1px solid ${B.grisCl}`}},
+    React.createElement('div', {style:{minWidth:26, height:26, borderRadius:"50%", background:color, display:"flex", alignItems:"center",
+      justifyContent:"center", fontWeight:900, fontSize:11, color:B.blanco, flexShrink:0}}, n),
+    React.createElement('div', {style:{fontSize:13, color:B.darkOsc, paddingTop:4, lineHeight:1.4}}, text)
+  );
+}
+function CheckItem({text, resp}) {
+  const [done, setDone] = useState(false);
+  return React.createElement('div', {
+    onClick:()=>setDone(!done),
+    style:{display:"flex", gap:10, alignItems:"center", padding:"10px 0", borderBottom:`1px solid ${B.grisCl}`, cursor:"pointer"}
+  },
+    React.createElement('div', {style:{width:22, height:22, borderRadius:5, border:`2px solid ${done?B.verde:B.grisCl}`,
+      background:done?B.verde:"transparent", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
+      color:B.blanco, fontSize:13, fontWeight:900, transition:"all 0.15s"}}, done&&"✓"),
+    React.createElement('div', {style:{flex:1, fontSize:13, color:done?B.gris:B.darkOsc, textDecoration:done?"line-through":"none", lineHeight:1.4}}, text),
+    React.createElement('span', {style:{background:B.dark, color:B.blanco, borderRadius:4, padding:"2px 6px", fontSize:8, fontWeight:800, letterSpacing:1, flexShrink:0}}, resp)
+  );
+}
+function Arrow({text, color=B.darkOsc}) {
+  return React.createElement('div', {style:{display:"flex", gap:10, alignItems:"flex-start", padding:"8px 0", borderBottom:`1px solid ${B.grisCl}`}},
+    React.createElement('span', {style:{color:B.verde, fontWeight:900, flexShrink:0}},"→"),
+    React.createElement('div', {style:{fontSize:13, color, lineHeight:1.4}}, text)
+  );
+}
+function Cross({text}) {
+  return React.createElement('div', {style:{display:"flex", gap:10, alignItems:"flex-start", padding:"8px 0", borderBottom:`1px solid ${B.grisCl}`}},
+    React.createElement('span', {style:{color:B.rojo, fontWeight:900, flexShrink:0, fontSize:14}},"✗"),
+    React.createElement('div', {style:{fontSize:13, color:B.darkOsc, lineHeight:1.4}}, text)
+  );
+}
+
+// ─── VIEWS ───────────────────────────────────────────────────────────────────
+
+function RolesView({detail, setDetail}) {
+  if (detail) {
+    const r = ROLES.find(x=>x.id===detail); if (!r) return null;
+    return React.createElement('div', null,
+      React.createElement('div', {style:{background:r.color, borderRadius:10, padding:18, marginBottom:16, color:B.blanco}},
+        React.createElement('div', {style:{fontSize:36, marginBottom:8}}, r.emoji),
+        React.createElement('div', {style:{fontSize:22, fontWeight:900, textTransform:"uppercase", fontFamily:"'Barlow Condensed',sans-serif", letterSpacing:1}}, r.title),
+        r.tutor && React.createElement('div', {style:{fontSize:12, opacity:.75, marginTop:4}}, "Tutor: "+r.tutor),
+        React.createElement('div', {style:{background:"rgba(255,255,255,0.15)", borderRadius:6, padding:10, marginTop:12, fontSize:13, lineHeight:1.5, fontStyle:"italic"}}, '"'+r.mision+'"')
+      ),
+      React.createElement(Card, null,
+        React.createElement(SecLbl, null, "Cuándo trabaja"),
+        React.createElement('div', {style:{fontSize:13, color:B.darkOsc, fontWeight:600}}, r.cuando)
+      ),
+      React.createElement(SecLbl, null, "Qué hace"),
+      r.hace.map((h,i)=>React.createElement(Arrow, {key:i, text:h})),
+      React.createElement(SecLbl, null, "Qué NO hace"),
+      r.nohace.map((h,i)=>React.createElement(Cross, {key:i, text:h})),
+      React.createElement(SecLbl, null, "Sus KPIs"),
+      React.createElement('div', {style:{display:"flex", flexWrap:"wrap", gap:6, marginTop:4}},
+        r.kpis.map((k,i)=>React.createElement(Pill, {key:i, color:r.color}, k))
+      )
+    );
+  }
+  return React.createElement('div', null,
+    React.createElement(STitle, {title:"El Equipo", sub:"Quién es quién · Qué se espera"}),
+    ROLES.map(r=>React.createElement(Card, {key:r.id, onClick:()=>setDetail(r.id), style:{display:"flex", alignItems:"center", gap:14, borderLeft:`4px solid ${r.color}`}},
+      React.createElement('div', {style:{fontSize:30}}, r.emoji),
+      React.createElement('div', {style:{flex:1}},
+        React.createElement('div', {style:{fontSize:14, fontWeight:900, color:r.color, textTransform:"uppercase"}}, r.title),
+        React.createElement('div', {style:{fontSize:11, color:B.gris, marginTop:3, lineHeight:1.4}}, r.mision.substring(0,65)+"...")
+      ),
+      React.createElement('div', {style:{color:B.verde, fontSize:22, fontWeight:700}}, "›")
+    ))
+  );
+}
+
+function ChecksView({detail, setDetail}) {
+  const order = ["apertura","preservicio","servicio","entre","cierre"];
+  if (detail) {
+    const ck = CHECKLISTS[detail]; if (!ck) return null;
+    return React.createElement('div', null,
+      React.createElement('div', {style:{background:ck.color, borderRadius:8, padding:16, marginBottom:16, color:B.blanco}},
+        React.createElement('div', {style:{fontSize:11, letterSpacing:3, fontWeight:700, textTransform:"uppercase", opacity:.75, marginBottom:4}}, ck.hora),
+        React.createElement('div', {style:{fontSize:24, fontWeight:900, textTransform:"uppercase", fontFamily:"'Barlow Condensed',sans-serif"}}, ck.label),
+        React.createElement('div', {style:{fontSize:11, opacity:.7, marginTop:6}}, "Toca cada punto para marcarlo ✓")
+      ),
+      ck.items.map((item,i)=>React.createElement(CheckItem, {key:i, text:item.t, resp:item.r})),
+      React.createElement('div', {style:{marginTop:16, background:"#fffbe6", border:"1px solid #f0d060", borderRadius:8, padding:12, fontSize:12, color:"#7a6000"}},
+        "ℹ️ Si un punto no se puede completar, comunicarlo al encargado antes de continuar."
+      )
+    );
+  }
+  return React.createElement('div', null,
+    React.createElement(STitle, {title:"Checklists", sub:"Apertura · Servicio · Cierre · Sin excusas"}),
+    order.map(k=>{
+      const ck = CHECKLISTS[k];
+      return React.createElement(Card, {key:k, onClick:()=>setDetail(k), style:{borderLeft:`4px solid ${ck.color}`}},
+        React.createElement('div', {style:{display:"flex", alignItems:"center", justifyContent:"space-between"}},
+          React.createElement('div', null,
+            React.createElement('div', {style:{fontSize:15, fontWeight:900, color:B.darkOsc, textTransform:"uppercase"}}, ck.label),
+            React.createElement('div', {style:{fontSize:11, color:ck.color, fontWeight:700, marginTop:3, letterSpacing:1}}, ck.hora),
+            React.createElement('div', {style:{fontSize:11, color:B.gris, marginTop:4}}, ck.items.length+" puntos de control")
+          ),
+          React.createElement('div', {style:{color:B.verde, fontSize:22, fontWeight:700}}, "›")
+        )
+      );
+    })
+  );
+}
+
+function ProtocolosView({detail, setDetail}) {
+  if (detail) {
+    const p = PROTOCOLOS.find(x=>x.id===detail); if (!p) return null;
+    return React.createElement('div', null,
+      React.createElement('div', {style:{background:p.color, borderRadius:8, padding:16, marginBottom:16, color:B.blanco}},
+        React.createElement('div', {style:{display:"flex", alignItems:"center", gap:12}},
+          React.createElement('div', {style:{fontSize:36}}, p.emoji),
+          React.createElement('div', null,
+            React.createElement('div', {style:{background:"rgba(255,255,255,0.25)", display:"inline-block", borderRadius:4, padding:"2px 8px", fontSize:9, fontWeight:800, letterSpacing:2, marginBottom:6}}, p.urgencia),
+            React.createElement('div', {style:{fontSize:20, fontWeight:900, textTransform:"uppercase", lineHeight:1.2, fontFamily:"'Barlow Condensed',sans-serif"}}, p.title)
+          )
+        )
+      ),
+      React.createElement(SecLbl, null, "Pasos a seguir — en orden"),
+      p.pasos.map((s,i)=>React.createElement(NumStep, {key:i, n:i+1, text:s, color:p.color})),
+      React.createElement('div', {style:{background:"#fff5f5", border:`1px solid ${B.rojo}44`, borderRadius:8, padding:14, marginTop:14}},
+        React.createElement('div', {style:{fontWeight:800, fontSize:10, letterSpacing:2, color:B.rojo, marginBottom:6}}, "🚫 NUNCA HACER"),
+        React.createElement('div', {style:{fontSize:13, color:B.darkOsc}}, p.nohacer)
+      ),
+      React.createElement(Card, {style:{marginTop:8}},
+        React.createElement('div', {style:{fontWeight:800, fontSize:10, letterSpacing:2, color:B.verde, marginBottom:6}}, "📞 CONTACTO CLAVE"),
+        React.createElement('div', {style:{fontSize:13, color:B.darkOsc}}, p.contacto)
+      )
+    );
+  }
+  return React.createElement('div', null,
+    React.createElement(STitle, {title:"Protocolos", sub:"Problemas recurrentes · Qué hacer · En orden"}),
+    PROTOCOLOS.map(p=>React.createElement(Card, {key:p.id, onClick:()=>setDetail(p.id), style:{borderLeft:`4px solid ${p.color}`}},
+      React.createElement('div', {style:{display:"flex", alignItems:"center", gap:14}},
+        React.createElement('div', {style:{fontSize:28}}, p.emoji),
+        React.createElement('div', {style:{flex:1}},
+          React.createElement('div', {style:{fontSize:14, fontWeight:900, color:B.darkOsc, textTransform:"uppercase", marginBottom:4}}, p.title),
+          React.createElement('div', {style:{display:"flex", gap:6, alignItems:"center"}},
+            React.createElement('span', {style:{background:p.color, color:B.blanco, borderRadius:4, padding:"2px 7px", fontSize:8, fontWeight:800, letterSpacing:1}}, p.urgencia),
+            React.createElement('span', {style:{fontSize:11, color:B.gris}}, p.pasos.length+" pasos definidos")
+          )
+        ),
+        React.createElement('div', {style:{color:B.verde, fontSize:22, fontWeight:700}}, "›")
+      )
+    ))
+  );
+}
+
+function OnboardingView() {
+  const [open, setOpen] = useState("antes");
+  const secs = [
+    {id:"antes",  label:"Antes del primer día",     color:B.dark,    items:ONBOARDING.antes},
+    {id:"sem1",   label:"Semana 1 — Observación",   color:B.darkCl,  items:ONBOARDING.sem1},
+    {id:"sem2",   label:"Semana 2 — Supervisado",   color:B.verde,   items:ONBOARDING.sem2},
+    {id:"mes1",   label:"Mes 1 — Autonomía",        color:B.verdeOsc,items:ONBOARDING.mes1},
+    {id:"espera", label:"Lo que se espera siempre", color:B.rojo,    items:ONBOARDING.espera},
+  ];
+  return React.createElement('div', null,
+    React.createElement(STitle, {title:"Formación", sub:"Onboarding · Adaptación · Expectativas"}),
+    React.createElement(Card, {style:{background:B.dark, border:"none", marginBottom:16}},
+      React.createElement('div', {style:{fontWeight:800, fontSize:10, letterSpacing:2, color:"rgba(255,255,255,0.6)", marginBottom:10, textTransform:"uppercase"}}, "Duración de adaptación"),
+      React.createElement('div', {style:{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, textAlign:"center"}},
+        [["Semana 1","Observación"],["Semana 2","Supervisado"],["Mes 1","Autónomo"]].map(([t,s])=>
+          React.createElement('div', {key:t, style:{padding:"10px 6px", background:"rgba(255,255,255,0.1)", borderRadius:8}},
+            React.createElement('div', {style:{fontSize:12, fontWeight:900, color:B.blanco}}, t),
+            React.createElement('div', {style:{fontSize:10, color:"rgba(255,255,255,0.55)", marginTop:2}}, s)
+          )
+        )
+      )
+    ),
+    secs.map(sec=>React.createElement('div', {key:sec.id, style:{marginBottom:8}},
+      React.createElement('div', {
+        onClick:()=>setOpen(open===sec.id?null:sec.id),
+        style:{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"13px 14px",
+               background:B.blanco, border:`1px solid ${B.grisCl}`, borderLeft:`4px solid ${sec.color}`,
+               borderRadius:8, cursor:"pointer", boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}
+      },
+        React.createElement('span', {style:{fontSize:14, fontWeight:900, color:sec.color, textTransform:"uppercase"}}, sec.label),
+        React.createElement('span', {style:{color:B.verde, fontSize:16, fontWeight:700}}, open===sec.id?"▲":"▼")
+      ),
+      open===sec.id && React.createElement('div', {
+        style:{background:B.blanco, border:`1px solid ${B.grisCl}`, borderTop:"none", borderRadius:"0 0 8px 8px", padding:"4px 14px 12px"}
+      },
+        sec.items.map((item,i)=>React.createElement(Arrow, {key:i, text:item, color:sec.id==="espera"?"rgba(217,66,53,0.85)":B.darkOsc}))
+      )
+    ))
+  );
+}
+
+function FichasView({detail, setDetail}) {
+  if (detail) {
+    const f = FICHAS.find(x=>x.id===detail); if (!f) return null;
+    return React.createElement('div', null,
+      React.createElement(GreenCard, null,
+        React.createElement('div', {style:{display:"flex", justifyContent:"space-between", alignItems:"flex-start"}},
+          React.createElement('div', {style:{flex:1}},
+            React.createElement('div', {style:{background:"rgba(155,191,58,0.25)", display:"inline-block", borderRadius:4, padding:"2px 8px", fontSize:9, fontWeight:800, letterSpacing:2, color:B.verdeCl, marginBottom:8}}, f.cat.toUpperCase()),
+            React.createElement('div', {style:{fontSize:20, fontWeight:900, textTransform:"uppercase", lineHeight:1.2, fontFamily:"'Barlow Condensed',sans-serif"}}, f.nombre),
+            React.createElement('div', {style:{fontSize:13, opacity:.8, marginTop:6, lineHeight:1.4}}, f.desc)
+          ),
+          React.createElement('div', {style:{fontSize:40, marginLeft:12}}, f.emoji)
+        )
+      ),
+      f.nota && React.createElement('div', {style:{background:"#fffbe6", border:"1px solid #f0d060", borderRadius:8, padding:12, marginBottom:12, fontSize:12, color:"#7a6000", fontWeight:600}}, f.nota),
+      React.createElement(SecLbl, null, "Ingredientes y gramajes"),
+      React.createElement('div', {style:{background:B.blanco, border:`1px solid ${B.grisCl}`, borderRadius:8, overflow:"hidden", marginBottom:12}},
+        React.createElement('div', {style:{display:"grid", gridTemplateColumns:"1fr auto", padding:"8px 12px", background:B.dark}},
+          React.createElement('span', {style:{fontSize:9, fontWeight:800, letterSpacing:2, color:"rgba(255,255,255,0.6)", textTransform:"uppercase"}}, "INGREDIENTE"),
+          React.createElement('span', {style:{fontSize:9, fontWeight:800, letterSpacing:2, color:"rgba(255,255,255,0.6)", textTransform:"uppercase"}}, "CANTIDAD")
+        ),
+        f.ing.map((ing,i)=>React.createElement('div', {key:i, style:{display:"grid", gridTemplateColumns:"1fr auto", padding:"10px 12px", borderBottom:`1px solid ${B.grisCl}`, background:i%2===0?B.blanco:B.crema}},
+          React.createElement('span', {style:{fontSize:13, color:B.darkOsc}}, ing.p),
+          React.createElement('span', {style:{fontSize:13, color:B.verde, fontWeight:900}}, ing.c)
+        ))
+      ),
+      React.createElement(SecLbl, null, "Proceso de elaboración"),
+      f.proceso.map((p,i)=>React.createElement(NumStep, {key:i, n:i+1, text:p})),
+      React.createElement(SecLbl, null, "Montaje y presentación"),
+      React.createElement(Card, null, React.createElement('div', {style:{fontSize:13, color:B.darkOsc, lineHeight:1.5}}, f.montaje)),
+      React.createElement('div', {style:{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginTop:4}},
+        React.createElement(Card, {style:{textAlign:"center"}},
+          React.createElement('div', {style:{fontWeight:800, fontSize:9, letterSpacing:2, color:B.gris, marginBottom:6, textTransform:"uppercase"}}, "Alérgenos"),
+          React.createElement('div', {style:{fontSize:12, color:B.rojo, fontWeight:700}}, f.alergenos)
+        ),
+        React.createElement(Card, {style:{textAlign:"center"}},
+          React.createElement('div', {style:{fontWeight:800, fontSize:9, letterSpacing:2, color:B.gris, marginBottom:6, textTransform:"uppercase"}}, "Food Cost"),
+          React.createElement('div', {style:{fontSize:12, color:B.verde, fontWeight:700}}, f.fc)
+        )
+      )
+    );
+  }
+  const cats = [...new Set(FICHAS.map(f=>f.cat))];
+  return React.createElement('div', null,
+    React.createElement(STitle, {title:"Fichas Técnicas", sub:"Recetas · Gramajes · Proceso · Montaje"}),
+    cats.map(cat=>React.createElement('div', {key:cat},
+      React.createElement('div', {style:{background:B.dark, borderRadius:6, padding:"8px 12px", marginBottom:8, marginTop:12}},
+        React.createElement('span', {style:{fontSize:9, fontWeight:900, letterSpacing:3, color:B.blanco, textTransform:"uppercase"}}, cat)
+      ),
+      FICHAS.filter(f=>f.cat===cat).map(f=>React.createElement(Card, {key:f.id, onClick:()=>setDetail(f.id), style:{display:"flex", alignItems:"center", gap:14}},
+        React.createElement('div', {style:{fontSize:30}}, f.emoji),
+        React.createElement('div', {style:{flex:1}},
+          React.createElement('div', {style:{fontSize:14, fontWeight:900, color:B.darkOsc, textTransform:"uppercase"}}, f.nombre),
+          React.createElement('div', {style:{fontSize:11, color:B.gris, marginTop:3}}, f.desc.substring(0,55)+"...")
+        ),
+        React.createElement('div', {style:{color:B.verde, fontSize:22, fontWeight:700}}, "›")
+      ))
+    ))
+  );
+}
+
+function ServicioView({detail, setDetail}) {
+  const [tab, setTab] = useState("perfiles");
+
+  // ── DETALLE DE PERFIL ─────────────────────────────────────────────────────
+  if (detail) {
+    const p = PERFILES.find(x=>x.id===detail); if (!p) return null;
+    return React.createElement('div', null,
+      // Header perfil
+      React.createElement('div', {style:{background:B.dark, borderRadius:10, padding:18, marginBottom:14, color:B.blanco}},
+        React.createElement('div', {style:{fontSize:36, marginBottom:6}}, p.emoji),
+        React.createElement('div', {style:{fontSize:22, fontWeight:900, textTransform:"uppercase", fontFamily:"'Barlow Condensed',sans-serif", letterSpacing:1}}, p.titulo),
+        React.createElement('div', {style:{fontSize:10, letterSpacing:2, color:"rgba(255,255,255,0.55)", textTransform:"uppercase", marginTop:4}}, "Guión de venta · "+p.tipo)
+      ),
+      // Regla de oro
+      React.createElement('div', {style:{background:B.verde, borderRadius:8, padding:14, marginBottom:10}},
+        React.createElement('div', {style:{fontSize:9, fontWeight:900, letterSpacing:2, color:"rgba(255,255,255,0.75)", textTransform:"uppercase", marginBottom:6}}, "⚡ UPSELLING — lanzar siempre primero"),
+        React.createElement('div', {style:{fontSize:14, fontWeight:700, color:B.blanco, lineHeight:1.4, fontStyle:"italic"}}, '"'+p.upselling+'"')
+      ),
+      // Crossselling
+      React.createElement(SecLbl, null, "→ CROSSSELLING — recomendar a continuación"),
+      React.createElement(Card, null,
+        p.crossselling.map((f,i)=>React.createElement('div', {key:i, style:{display:"flex", gap:10, alignItems:"flex-start", padding:"9px 0", borderBottom:i<p.crossselling.length-1?`1px solid ${B.grisCl}`:"none"}},
+          React.createElement('span', {style:{color:B.verde, fontWeight:900, flexShrink:0, fontSize:14}}, "→"),
+          React.createElement('div', {style:{fontSize:13, color:B.darkOsc, lineHeight:1.5, fontStyle:"italic"}}, '"'+f+'"')
+        ))
+      ),
+      // Postre
+      React.createElement(SecLbl, null, "🍦 POSTRE — siempre antes de la cuenta"),
+      React.createElement('div', {style:{background:"rgba(155,191,58,0.08)", border:`1.5px solid ${B.verde}`, borderRadius:8, padding:14}},
+        React.createElement('div', {style:{fontSize:13, color:B.darkOsc, lineHeight:1.5, fontStyle:"italic"}}, '"'+p.postre+'"')
+      ),
+      // Recordatorio
+      React.createElement('div', {style:{background:"#fff5f5", border:`1px solid ${B.rojo}44`, borderRadius:8, padding:12, marginTop:12}},
+        React.createElement('div', {style:{fontWeight:800, fontSize:9, letterSpacing:2, color:B.rojo, marginBottom:4}}, "🚫 NUNCA DECIR"),
+        React.createElement('div', {style:{fontSize:13, color:B.darkOsc, fontWeight:600}}, '"¿Lo quieres en menú?" — Di siempre la frase positiva del menú.')
+      )
+    );
+  }
+
+  // ── VISTA PRINCIPAL ───────────────────────────────────────────────────────
+  return React.createElement('div', null,
+    React.createElement(STitle, {title:"Venta Sugerida", sub:"Guión cajero · Perfiles · 8 Pasos"}),
+
+    // Regla de oro
+    React.createElement('div', {style:{background:B.dark, borderRadius:8, padding:14, marginBottom:14}},
+      React.createElement('div', {style:{fontSize:9, fontWeight:900, letterSpacing:2, color:B.verde, marginBottom:6, textTransform:"uppercase"}}, "⚡ Regla de oro — memorízala"),
+      React.createElement('div', {style:{display:"flex", alignItems:"center", gap:8, flexWrap:"wrap"}},
+        React.createElement('div', {style:{background:B.rojo, borderRadius:5, padding:"4px 10px", fontSize:11, color:B.blanco, fontWeight:700, textDecoration:"line-through"}}, "¿Lo quieres en menú?"),
+        React.createElement('div', {style:{color:B.verde, fontWeight:900, fontSize:16}},"→"),
+        React.createElement('div', {style:{background:B.verde, borderRadius:5, padding:"4px 10px", fontSize:11, color:B.blanco, fontWeight:700}}, "¡Las Burgers llevan patatas y bebida en el menú!")
+      )
+    ),
+
+    // Tabs
+    React.createElement('div', {style:{display:"flex", gap:4, marginBottom:14, background:B.blanco, padding:5, borderRadius:10, border:`1px solid ${B.grisCl}`}},
+      ["perfiles","pasos","prohibido"].map((t,i)=>
+        React.createElement('button', {key:t, onClick:()=>setTab(t), style:{
+          flex:1, padding:"8px 4px", borderRadius:7, border:"none", cursor:"pointer",
+          fontWeight:800, fontSize:10, letterSpacing:0.5, textTransform:"uppercase",
+          background:tab===t?B.dark:B.blanco, color:tab===t?B.blanco:B.gris, transition:"all 0.15s"
+        }}, t==="perfiles"?"👤 Perfiles": t==="pasos"?"8️⃣ Pasos":"🚫 Prohibido")
+      )
+    ),
+
+    // ── TAB: PERFILES ─────────────────────────────────────────────────────
+    tab==="perfiles" && React.createElement('div', null,
+      React.createElement('div', {style:{fontSize:11, color:B.gris, marginBottom:12, lineHeight:1.5}},
+        "Identifica el tipo de cliente en 3 segundos y aplica el guión correspondiente."
+      ),
+      PERFILES.map(p=>React.createElement(Card, {key:p.id, onClick:()=>setDetail(p.id),
+        style:{display:"flex", alignItems:"center", gap:14, borderLeft:`4px solid ${B.verde}`}},
+        React.createElement('div', {style:{fontSize:30}}, p.emoji),
+        React.createElement('div', {style:{flex:1}},
+          React.createElement('div', {style:{fontSize:15, fontWeight:900, color:B.darkOsc, textTransform:"uppercase"}}, p.titulo),
+          React.createElement('div', {style:{fontSize:10, color:B.gris, marginTop:3, letterSpacing:1, textTransform:"uppercase"}}, "Guión "+p.tipo),
+          React.createElement('div', {style:{display:"flex", gap:6, marginTop:7}},
+            React.createElement(Pill, {color:B.verde}, "Upselling"),
+            React.createElement(Pill, {color:B.dark}, "Crossselling"),
+            React.createElement(Pill, {color:B.amarillo}, "Postre")
+          )
+        ),
+        React.createElement('div', {style:{color:B.verde, fontSize:22, fontWeight:700}}, "›")
+      ))
+    ),
+
+    // ── TAB: 8 PASOS ──────────────────────────────────────────────────────
+    tab==="pasos" && React.createElement('div', null,
+      React.createElement('div', {style:{fontSize:11, color:B.gris, marginBottom:12, lineHeight:1.5}},
+        "El proceso de atención al cliente. En este orden exacto, sin saltarse ningún paso."
+      ),
+      PASOS8.map((p,i)=>React.createElement('div', {key:i, style:{display:"flex", gap:0, marginBottom:8}},
+        React.createElement('div', {style:{display:"flex", flexDirection:"column", alignItems:"center", width:44, flexShrink:0}},
+          React.createElement('div', {style:{width:36, height:36, borderRadius:8, background:p.color, display:"flex", alignItems:"center", justifyContent:"center",
+            fontFamily:"'Barlow Condensed',sans-serif", fontWeight:900, fontSize:18, color:p.color===B.verde?B.blanco:B.blanco}}, p.n),
+          i<PASOS8.length-1 && React.createElement('div', {style:{width:2, flex:1, background:B.grisCl, marginTop:4, minHeight:12}})
+        ),
+        React.createElement('div', {style:{flex:1, paddingLeft:10, paddingBottom:i<PASOS8.length-1?16:0}},
+          React.createElement('div', {style:{fontSize:12, fontWeight:900, color:p.color===B.verde?B.verdeOsc:B.darkOsc, textTransform:"uppercase", letterSpacing:0.5}}, p.titulo),
+          React.createElement('div', {style:{fontSize:12, color:B.gris, marginTop:3, lineHeight:1.4}}, p.desc)
+        )
+      )),
+      // Recuadros timing / tono / objetivo
+      React.createElement('div', {style:{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginTop:8}},
+        [
+          {label:"TIMING", texto:"El crossselling va justo después del upselling, no al final. El postre, siempre justo después."},
+          {label:"TONO",   texto:"Recomienda como un amigo, no vendas como un robot. La confianza genera ticket medio."},
+          {label:"OBJETIVO",texto:"Cada interacción = +1€ de media. 50 clientes/día × 1€ = 50€ extra. ¡Se nota!"},
+        ].map(({label,texto})=>React.createElement('div', {key:label, style:{background:B.dark, borderRadius:8, padding:10}},
+          React.createElement('div', {style:{fontSize:8, fontWeight:900, letterSpacing:2, color:B.verde, marginBottom:5, textTransform:"uppercase"}}, "💡 "+label),
+          React.createElement('div', {style:{fontSize:10, color:"rgba(255,255,255,0.75)", lineHeight:1.4}}, texto)
+        ))
+      )
+    ),
+
+    // ── TAB: PROHIBIDO ────────────────────────────────────────────────────
+    tab==="prohibido" && React.createElement('div', null,
+      React.createElement('div', {style:{background:"#fff5f5", border:`1.5px solid ${B.rojo}`, borderRadius:8, padding:12, marginBottom:12}},
+        React.createElement('div', {style:{fontWeight:900, fontSize:11, letterSpacing:2, color:B.rojo, marginBottom:2, textTransform:"uppercase"}}, "🚫 PROHIBIDO — Frases que eliminan ventas"),
+        React.createElement('div', {style:{fontSize:11, color:B.gris}}, "Si dices alguna de estas frases, estás perdiendo dinero en cada pedido.")
+      ),
+      PROHIBIDO.map((f,i)=>React.createElement('div', {key:i, style:{display:"flex", gap:10, alignItems:"flex-start",
+        padding:"10px 0", borderBottom:i<PROHIBIDO.length-1?`1px solid ${B.grisCl}`:"none"}},
+        React.createElement('span', {style:{color:B.rojo, fontWeight:900, fontSize:16, flexShrink:0}}, "✗"),
+        React.createElement('div', {style:{fontSize:13, color:B.darkOsc, lineHeight:1.4}}, f)
+      ))
+    )
+  );
+}
+
+function KpisView() {
+  const [filter, setFilter] = useState("Todos");
+  const freqs = ["Todos","Diario","Semanal","Mensual","Por servicio"];
+  const filtered = filter==="Todos" ? KPIS : KPIS.filter(k=>k.freq===filter);
+  return React.createElement('div', null,
+    React.createElement(STitle, {title:"Indicadores", sub:"Qué se mide · Cómo · Quién · Cuándo"}),
+    React.createElement('div', {style:{display:"flex", gap:6, flexWrap:"wrap", marginBottom:16}},
+      freqs.map(f=>React.createElement('button', {key:f, onClick:()=>setFilter(f), style:{
+        background:filter===f?B.dark:B.blanco, border:`2px solid ${filter===f?B.dark:B.grisCl}`,
+        color:filter===f?B.blanco:B.gris, borderRadius:20, padding:"5px 12px", fontSize:9,
+        fontWeight:800, cursor:"pointer", letterSpacing:1, textTransform:"uppercase"}}, f))
+    ),
+    filtered.map((k,i)=>React.createElement(Card, {key:i, style:{borderLeft:`4px solid ${k.color}`}},
+      React.createElement('div', {style:{display:"flex", alignItems:"flex-start", gap:12}},
+        React.createElement('div', {style:{fontSize:24}}, k.emoji),
+        React.createElement('div', {style:{flex:1}},
+          React.createElement('div', {style:{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6}},
+            React.createElement('div', {style:{fontSize:14, fontWeight:900, color:B.darkOsc, textTransform:"uppercase"}}, k.kpi),
+            React.createElement('span', {style:{background:k.color, color:B.blanco, borderRadius:4, padding:"2px 7px", fontSize:8, fontWeight:800, letterSpacing:1}}, k.freq)
+          ),
+          React.createElement('div', {style:{background:B.dark, color:B.blanco, borderRadius:6, padding:"6px 10px", marginBottom:8, fontSize:12, fontWeight:700}}, "Objetivo: "+k.obj),
+          React.createElement('div', {style:{display:"grid", gridTemplateColumns:"1fr 1fr", gap:6}},
+            React.createElement('div', null,
+              React.createElement('div', {style:{fontSize:8, fontWeight:800, letterSpacing:2, color:B.gris, marginBottom:2, textTransform:"uppercase"}}, "Responsable"),
+              React.createElement('div', {style:{fontSize:12, color:B.darkOsc, fontWeight:600}}, k.quien)
+            ),
+            React.createElement('div', null,
+              React.createElement('div', {style:{fontSize:8, fontWeight:800, letterSpacing:2, color:B.gris, marginBottom:2, textTransform:"uppercase"}}, "Cómo"),
+              React.createElement('div', {style:{fontSize:11, color:B.darkOsc}}, k.como)
+            )
+          )
+        )
+      )
+    ))
+  );
+}
+
+// ─── APP ROOT ─────────────────────────────────────────────────────────────────
+function App() {
+  const [mod, setMod] = useState("roles");
+  const [detail, setDetail] = useState(null);
+
+  return React.createElement('div', {style:S.app},
+    // HEADER
+    React.createElement('div', {style:S.hdr},
+      detail && React.createElement('button', {
+        onClick:()=>setDetail(null),
+        style:{background:"rgba(255,255,255,0.25)", border:"none", color:B.blanco, cursor:"pointer", fontSize:18, padding:"4px 10px", borderRadius:6, fontWeight:700}
+      }, "←"),
+      React.createElement('div', {style:{flex:1}},
+        React.createElement('div', {style:{display:"flex", alignItems:"center", gap:8}},
+          React.createElement('div', {style:{fontFamily:"'Barlow Condensed',sans-serif", fontWeight:900, fontSize:22, letterSpacing:2, lineHeight:1}},
+            React.createElement('span', {style:{color:B.blanco}}, "T"),
+            React.createElement('span', {style:{color:B.darkOsc}}, "G"),
+            React.createElement('span', {style:{color:B.blanco}}, "B")
+          ),
+          React.createElement('div', {style:{width:1, height:20, background:"rgba(255,255,255,0.35)"}}),
+          React.createElement('div', {style:{fontSize:10, letterSpacing:2, color:"rgba(255,255,255,0.85)", textTransform:"uppercase", fontWeight:600}},
+            (MODULES.find(m=>m.id===mod)||{}).label+" · Sistema Operativo"
+          )
+        )
+      )
+    ),
+    // CONTENT
+    React.createElement('div', {style:S.cont},
+      mod==="roles"      && React.createElement(RolesView,      {detail, setDetail}),
+      mod==="checks"     && React.createElement(ChecksView,     {detail, setDetail}),
+      mod==="protocolos" && React.createElement(ProtocolosView, {detail, setDetail}),
+      mod==="onboarding" && React.createElement(OnboardingView, null),
+      mod==="fichas"     && React.createElement(FichasView,     {detail, setDetail}),
+      mod==="servicio"   && React.createElement(ServicioView,   {detail, setDetail}),
+      mod==="kpis"       && React.createElement(KpisView,       null)
+    ),
+    // NAV
+    React.createElement('div', {style:S.nav},
+      MODULES.map(({id, emoji, label})=>
+        React.createElement('button', {
+          key:id,
+          onClick:()=>{setMod(id); setDetail(null);},
+          style:{flex:1, background:"none", border:"none", cursor:"pointer", display:"flex", flexDirection:"column",
+                 alignItems:"center", gap:2, padding:"10px 0 14px",
+                 color:mod===id?B.blanco:"rgba(255,255,255,0.45)", transition:"color 0.15s",
+                 borderTop:mod===id?`2px solid ${B.blanco}`:"2px solid transparent"}
+        },
+          React.createElement('span', {style:{fontSize:16}}, emoji),
+          React.createElement('span', {style:{fontSize:7, letterSpacing:1, textTransform:"uppercase", fontWeight:mod===id?700:400}}, label)
+        )
+      )
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+</script>
+</body>
+</html>
